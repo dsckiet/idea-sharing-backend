@@ -92,17 +92,26 @@ module.exports.delete_ideas = (req, res) => {
 
 }
 
-module.exports.edit_ideas = (req, res) => {
-	
-	User.findOne({email: req.params.email}, (err, user) => {
+module.exports.edit_ideas = (req, res) => {	
+
+	User.findOne({ email: req.params.email }, (err, user) => {
 		if(err) return res.status(404).json({message: 'error'});
 		if(user) {
 			const ideaFields = {};
 			ideaFields.user = req.user.id;
+			if(req.body.title) 
+		}
+	}
+
+	/*User.findOne({email: req.params.email}, (err, user) => {
+		if(err) return res.status(404).json({message: 'error'});
+		if(user) {
+			const ideaFields = {};
+			ideaFields.user = user._id;
 			if(req.body.title) ideaFields.title = req.body.title;
 			if(req.body.desc) ideaFields.desc = req.body.desc;
 
-			Idea.findOne({ idea: req.params.id })
+			Idea.findOne({ idea: user._id })
 				.then(idea => {
 					if(idea.delete == false) {
 						Ideas.findOneAndUpdate({ idea: req.params.id }, { $set: ideaFields }, { new: true })
@@ -116,6 +125,6 @@ module.exports.edit_ideas = (req, res) => {
 		}
 	});
 
-
+*/
 	
 }
