@@ -48,22 +48,16 @@ module.exports.show_all_ideas = (req, res) => {
 	User.findOne({ email: req.params.email }, (err, user) => {
 		if(err) return res.status(404).json({message: 'error'});
 		if(user) {
-			Idea.find()
+			Idea.find({ delete: false })
 				.sort({ date: -1 })
 				.populate('user', ['name', 'email'])
 				.then(ideas => {
 					if(!ideas) {
 						res.status(404).json({message: 'no ideas found'})
 					}
-					/*const numOfIdeas = ideas.length();
-					while(numOfIdeas--){
-						if(ideas.delete == false) {
-							res.json(ideas);
-						}
-					}*/
 					res.json(ideas);
 				})
-				.catch(err => res.status(404).json({ message: 'error' }));
+				.catch(err => res.status(400).json(err));
 		}
 		else{
 			res.status(404).json({message: 'no user found'});
@@ -77,16 +71,23 @@ module.exports.delete_ideas = (req, res) => {
 	User.findOne({ email: req.params.email }, (err, user) => {
 		if(err) return res.status(404).json({message: 'error'});
 		if(user) {
-			Idea.find()
+			Idea.findOne({ _id: req.params.id })
 				.then(idea => {
-					//const removeIndex = idea.indexOf(req.params.idea_id);
-
-				idea.delete = true;
-
-				idea.save().then(idea => res.json({ message: 'idea deleted successfully'}));
-
-		    })
-			.catch(err => res.status(404).json({message: 'error deleting idea'}));
+					if(idea) {
+						Idea.updateOne({ _id: req.params.id}, {delete: true})
+							.then(idea => {
+								//idea.delete = true;
+								res.json(idea);
+							})
+							.catch(err => res.status(404).json(err));
+					}
+					else{
+						res.status(404).json({message: 'no idea found'});
+					}
+				})
+		}
+		else{
+			res.status(404).json({message: 'no user found'});
 		}
 	});
 
@@ -98,33 +99,24 @@ module.exports.edit_ideas = (req, res) => {
 		if(err) return res.status(404).json({message: 'error'});
 		if(user) {
 			const ideaFields = {};
-			ideaFields.user = req.user.id;
-			if(req.body.title) 
-		}
-	}
-
-	/*User.findOne({email: req.params.email}, (err, user) => {
-		if(err) return res.status(404).json({message: 'error'});
-		if(user) {
-			const ideaFields = {};
 			ideaFields.user = user._id;
 			if(req.body.title) ideaFields.title = req.body.title;
 			if(req.body.desc) ideaFields.desc = req.body.desc;
 
-			Idea.findOne({ idea: user._id })
+			Idea.findOne({ _id: req.params.id })
 				.then(idea => {
-					if(idea.delete == false) {
-						Ideas.findOneAndUpdate({ idea: req.params.id }, { $set: ideaFields }, { new: true })
-							.save()
-							.then(idea => res.json(idea));
+					if(idea) {
+						Idea.findOneAndUpdate({ _id: req.params.id}, {$set: ideaFields}, { new: true })
+							.then(idea => res.json(idea))
+							.catch(err => res.status(404).json(err));
 					}
-			});
-			
-		} else{
-			return res.status(404).json({message: 'no user found'});
+					else{
+						res.status(404).json({message: 'no idea found'});
+					}
+				})
+		}
+		else{
+			res.status(404).json({message: 'no user found'});
 		}
 	});
-
-*/
-	
 }
