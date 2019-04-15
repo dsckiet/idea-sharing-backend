@@ -25,7 +25,7 @@ module.exports.add_user = (req, res) => {
 
 module.exports.add_ideas = (req, res) => {
 	User.findOne({email: req.params.email}, (err, user) => {
-		if (err) return res.status(404).json({message: 'error'});
+		if (err) return res.status(404).json({message: 'error', idea: ''});
 		if(user) {
 			const newIdea = new Idea({
 				user: user._id,
@@ -36,31 +36,31 @@ module.exports.add_ideas = (req, res) => {
 
 			newIdea
 				.save()
-				.then(idea => res.json(idea))
-				.catch(err => res.status(404).json({message: 'Idea can not be added' }));
+				.then(idea => res.json({message: 'idea added', idea}))
+				.catch(err => res.status(404).json({message: 'idea can not be added', idea: ''}));
 		} else{
-			res.status(404).json({message: 'no user found'});
+			res.status(404).json({message: 'no user found', idea: ''});
 		}
 	});
 }
 
 module.exports.show_all_ideas = (req, res) => {
 	User.findOne({ email: req.params.email }, (err, user) => {
-		if(err) return res.status(404).json({message: 'error'});
+		if(err) return res.status(404).json({message: 'error', idea: ''});
 		if(user) {
 			Idea.find({ delete: false })
 				.sort({ date: -1 })
 				.populate('user', ['name', 'email'])
 				.then(ideas => {
 					if(!ideas) {
-						res.status(404).json({message: 'no ideas found'})
+						res.status(404).json({message: 'no ideas found', idea: ''})
 					}
-					res.json(ideas);
+					res.json({ideas, message: 'success'});
 				})
-				.catch(err => res.status(400).json(err));
+				.catch(err => res.status(400).json({message: 'error', idea: ''}));
 		}
 		else{
-			res.status(404).json({message: 'no user found'});
+			res.status(404).json({message: 'no user found', idea: ''});
 		}
 	});
 		
@@ -76,10 +76,9 @@ module.exports.delete_ideas = (req, res) => {
 					if(idea) {
 						Idea.updateOne({ _id: req.params.id}, {delete: true})
 							.then(idea => {
-								//idea.delete = true;
-								res.json(idea);
+								res.json({message: 'idea deleted'});
 							})
-							.catch(err => res.status(404).json(err));
+							.catch(err => res.status(404).json({message: 'error'}));
 					}
 					else{
 						res.status(404).json({message: 'no idea found'});
@@ -94,24 +93,24 @@ module.exports.delete_ideas = (req, res) => {
 }
 
 module.exports.edit_ideas = (req, res) => {	
-
 	User.findOne({ email: req.params.email }, (err, user) => {
-		if(err) return res.status(404).json({message: 'error'});
+		if(err) return res.status(404).json({message: 'error', idea:''});
 		if(user) {
 			const ideaFields = {};
 			ideaFields.user = user._id;
 			if(req.body.title) ideaFields.title = req.body.title;
 			if(req.body.desc) ideaFields.desc = req.body.desc;
+			if (req.body.technology) ideaFields.technology = req.body.technology;
 
 			Idea.findOne({ _id: req.params.id })
 				.then(idea => {
 					if(idea) {
-						Idea.findOneAndUpdate({ _id: req.params.id}, {$set: ideaFields}, { new: true })
-							.then(idea => res.json(idea))
-							.catch(err => res.status(404).json(err));
+						Idea.updateOne({ _id: req.params.id}, ideaFields)
+							.then(updated => res.json({message: 'idea updated', idea}))
+							.catch(err => res.status(404).json({message:'error', idea: ''}));
 					}
 					else{
-						res.status(404).json({message: 'no idea found'});
+						res.status(404).json({message: 'no idea found', idea: ''});
 					}
 				})
 		}
